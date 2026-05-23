@@ -1,25 +1,36 @@
 # SaveFromIfunny
 
-Minimal Android share-target app that tries to save a video shared from iFunny.
+Android share-target app for saving iFunny posts to your device gallery.
 
-## How it works
+## What it does
 
-- Appears in the Android share sheet as **Save from iFunny**
-- Receives `ACTION_SEND` for `video/*` (and `text/*` for diagnostics)
-- If it gets a `content://` stream (`EXTRA_STREAM` or `ClipData`), it copies it to:
-	- Android 10+ (API 29+): `Movies/iFunny/` via `MediaStore` (no storage permission)
-	- Android 9 and below: public `Movies/iFunny/` (requires storage permission)
+- Adds **Save from iFunny** to the Android share sheet
+- Saves shared iFunny videos to your gallery
+- Saves shared iFunny images to your gallery
+- Crops the bottom 20px from saved images
 
-## Build
+## Install
 
-Open in Android Studio and use **Build → Build APK(s)**, or run:
+Build the debug APK in Android Studio with **Build -> Build APK(s)**, or run:
 
 `./gradlew :app:assembleDebug`
 
-APK output:
+The APK is written to:
 
 `app/build/outputs/apk/debug/app-debug.apk`
 
+Install that APK on your Android device and allow app installation from your chosen source if Android prompts for it.
+
+## Use
+
+1. Open a post in iFunny.
+2. Tap **Share**.
+3. Choose **Save from iFunny**.
+4. Wait for the confirmation message.
+5. Check your gallery or Photos app for the saved file.
+
 ## Notes
 
-This only works if iFunny shares real media bytes/URIs to normal share targets. If iFunny is Snapchat-only, you may only receive text/links (see Logcat tag `IFunnySaver`).
+- Video posts are saved as videos.
+- Image posts are saved as images with the bottom 20px removed.
+- If a post cannot be resolved from the share action, the app will show an error message instead of saving anything.
