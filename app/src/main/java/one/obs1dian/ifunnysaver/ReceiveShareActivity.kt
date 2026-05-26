@@ -104,13 +104,15 @@ class ReceiveShareActivity : Activity() {
         
         val html = connection.inputStream.bufferedReader().use { it.readText() }
 
-        val videoMeta = findMetaContent(html, "og:video")
+        val videoMeta = findFirstMetaContent(
+            html,
+            listOf("og:video", "og:video:url", "og:video:secure_url", "twitter:player:stream")
+        )
         if (videoMeta != null) {
             return RemoteMedia(videoMeta, "video/mp4")
         }
         
-        val imageMeta = findMetaContent(html, "og:image")
-            ?: findMetaContent(html, "twitter:image")
+        val imageMeta = findFirstMetaContent(html, listOf("og:image", "twitter:image"))
         if (imageMeta != null) {
             return RemoteMedia(imageMeta, inferImageMimeType(imageMeta))
         }
@@ -122,9 +124,29 @@ class ReceiveShareActivity : Activity() {
         return imageRegex.find(html)?.value?.let { RemoteMedia(it, inferImageMimeType(it)) }
     }
 
-    private fun findMetaContent(html: String, propertyName: String): String? {
-        val regex = "<meta[^>]+(?:property|name)=\"$propertyName\"[^>]+content=\"([^\"]+)\"".toRegex(RegexOption.IGNORE_CASE)
-        return regex.find(html)?.groupValues?.get(1)
+    private fun findFirstMetaContent(html: String, propertyNames: List<String>): String? {
+        val metaTagRegex = "<meta\\b[^>]*>".toRegex(RegexOption.IGNORE_CASE)
+        val attributeRegex = "([a-zA-Z:-]+)\\s*=\\s*([\"'])(.*?)\\2".toRegex()
+
+        for (tag in metaTagRegex.findAll(html)) {
+            var propertyValue: String? = null
+            var contentValue: String? = null
+
+            for (attribute in attributeRegex.findAll(tag.value)) {
+                val attributeName = attribute.groupValues[1].lowercase()
+                val attributeValue = attribute.groupValues[3]
+                when (attributeName) {
+                    "property", "name" -> propertyValue = attributeValue
+                    "content" -> contentValue = attributeValue
+                }
+            }
+
+            if (propertyValue != null && contentValue != null && propertyNames.any { it.equals(propertyValue, ignoreCase = true) }) {
+                return contentValue
+            }
+        }
+
+        return null
     }
 
     private fun inferImageMimeType(url: String): String {

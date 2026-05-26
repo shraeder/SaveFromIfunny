@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+
 android {
     namespace = "com.ifunnysaver"
     compileSdk = 34
@@ -32,6 +34,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            (this as ApkVariantOutputImpl).outputFileName = "SaveFromiFunny.apk"
+        }
     }
 }
 
