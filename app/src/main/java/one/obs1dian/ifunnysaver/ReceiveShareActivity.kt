@@ -207,10 +207,9 @@ class ReceiveShareActivity : Activity() {
         connection.readTimeout = 10000
 
         connection.inputStream.use { input ->
-            val originalBitmap = BitmapFactory.decodeStream(input)
+            val bitmap = BitmapFactory.decodeStream(input)
                 ?: throw IOException("Failed to decode downloaded image")
-            val croppedBitmap = cropBottomPixels(originalBitmap, 20)
-            saveBitmapToPhotos(croppedBitmap, mimeType)
+            saveBitmapToPhotos(bitmap, mimeType)
         }
     }
 
@@ -261,14 +260,12 @@ class ReceiveShareActivity : Activity() {
     }
 
     private fun saveImageToPhotos(sourceUri: Uri, mimeType: String) {
-        val resolver = contentResolver
-        val croppedBitmap = resolver.openInputStream(sourceUri)?.use { input ->
-            val originalBitmap = BitmapFactory.decodeStream(input)
+        val bitmap = contentResolver.openInputStream(sourceUri)?.use { input ->
+            BitmapFactory.decodeStream(input)
                 ?: throw IOException("Failed to decode shared image")
-            cropBottomPixels(originalBitmap, 20)
         } ?: throw IOException("Failed to read shared image")
 
-        saveBitmapToPhotos(croppedBitmap, mimeType)
+        saveBitmapToPhotos(bitmap, mimeType)
     }
 
     private fun saveBitmapToPhotos(bitmap: Bitmap, mimeType: String) {
@@ -312,7 +309,7 @@ class ReceiveShareActivity : Activity() {
         try {
             resolver.openOutputStream(destUri)?.use { output ->
                 if (!bitmap.compress(compressFormat, 100, output)) {
-                    throw IOException("Failed to write cropped image")
+                    throw IOException("Failed to write image")
                 }
             } ?: throw IOException("Failed to open output stream")
             shouldPublish = true
@@ -329,15 +326,6 @@ class ReceiveShareActivity : Activity() {
                 }
             }
         }
-    }
-
-    private fun cropBottomPixels(source: Bitmap, pixelsToCrop: Int): Bitmap {
-        val safeCropHeight = (source.height - pixelsToCrop).coerceAtLeast(1)
-        val croppedBitmap = Bitmap.createBitmap(source, 0, 0, source.width, safeCropHeight)
-        if (croppedBitmap != source) {
-            source.recycle()
-        }
-        return croppedBitmap
     }
 
     companion object {
